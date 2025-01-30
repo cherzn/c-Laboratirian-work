@@ -15,7 +15,27 @@ size_t utf8_length(const string& str) {
 }
 
 // Функция для копирования символов в матрицу
-void copy_to_matrix(const string& message, size_t rows, size_t cols, char matrix[][401]) {
+
+
+int main() {
+    // Ввод строки
+    string kode;
+    cout << "Введите код шифрования (русские буквы): ";
+    getline(cin, kode);
+
+    string message;
+    cout << "Введите сообщение: ";
+    getline(cin, message);
+
+    size_t cols = utf8_length(kode); // Получаем количество столбцов
+    size_t message_length = utf8_length(message);
+    size_t rows = (message_length / cols) + (message_length % cols == 0 ? 0 : 1);
+
+    // Создаем матрицу в виде двумерного массива
+    const size_t MAX_ROWS = 100; // Максимальное количество строк
+    char matrix[MAX_ROWS][401] = {}; // Инициализируем нулями
+
+    // Копируем строку в матрицу
     size_t index = 0;
     for (size_t i = 0; i < rows; ++i) {
         for (size_t j = 0; j < cols; ++j) {
@@ -42,38 +62,39 @@ void copy_to_matrix(const string& message, size_t rows, size_t cols, char matrix
             }
         }
     }
-}
 
-int main() {
-    // Ввод строки
-    string kode;
-    cout << "Введите код шифрования (русские буквы): ";
-    getline(cin, kode);
+    // создаем матрицу для кодировки
+    char matrix2[MAX_ROWS * 4] = {}; // Увеличиваем размер для хранения всех символов
 
-    string message;
-    cout << "Введите сообщение: ";
-    getline(cin, message);
-
-    size_t cols = utf8_length(kode); // Получаем количество столбцов
-    size_t message_length = utf8_length(message);
-    size_t rows = (message_length / cols) + (message_length % cols == 0 ? 0 : 1);
-
-    // Создаем матрицу в виде двумерного массива
-    const size_t MAX_ROWS = 100; // Максимальное количество строк
-    char matrix[MAX_ROWS][401] = {}; // Инициализируем нулями
-
-    // Копируем строку в матрицу
-    copy_to_matrix(message, rows, cols, matrix);
-
-    // Выводим матрицу по столбцам в одну строчку
+    int in = 0;
     for (size_t j = 0; j < cols; ++j) {
         for (size_t i = 0; i < rows; ++i) {
-            if (matrix[i][j * 4] != '0') { // Проверяем на нулевой символ
-                cout << string(&matrix[i][j * 4]); // Выводим весь символ
-            } else {
-                cout << " "; // Если ячейка пустая, выводим пробел
+            if (in < message.length()+1) {
+                unsigned char first_byte = static_cast<unsigned char>(matrix[i][j * 4]);
+                int char_length = 0;
+
+                if ((first_byte & 0x80) == 0) {
+                    char_length = 1; // ASCII
+                } else if ((first_byte & 0xE0) == 0xC0) {
+                    char_length = 2; // 2 байта
+                } else if ((first_byte & 0xF0) == 0xE0) {
+                    char_length = 3; // 3 байта
+                } else if ((first_byte & 0xF8) == 0xF0) {
+                    char_length = 4; // 4 байта
+                }
+
+                // Копируем символ в матрицу
+                for (size_t k = 0; k < char_length; ++k) {
+                    matrix2[in + k] = matrix[i][j * 4 + k]; // Копируем корректно
+                }
+                in += char_length;
             }
         }
+    }
+
+    // Выводим результат
+    for (size_t i = 0; i < in; ++i) {
+        cout << matrix2[i];
     }
 
     cout << endl;
